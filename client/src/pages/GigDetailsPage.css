@@ -1,0 +1,232 @@
+.gig-details-container {
+  position: relative;
+  min-height: 100vh;
+  background: #06202B;
+  overflow-x: hidden;
+}
+
+.gig-details-content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 6rem 2rem 4rem;
+  min-height: calc(100vh - 80px);
+}
+
+.back-button {
+  background: rgba(7, 122, 125, 0.3);
+  border: 1px solid rgba(122, 226, 207, 0.3);
+  color: #7AE2CF;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: rgba(7, 122, 125, 0.5);
+  border-color: #7AE2CF;
+  transform: translateX(-4px);
+}
+
+.gig-details-card {
+  background: rgba(7, 122, 125, 0.2);
+  border: 2px solid rgba(122, 226, 207, 0.3);
+  border-radius: 16px;
+  padding: 2.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.gig-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(122, 226, 207, 0.2);
+}
+
+.gig-title {
+  font-size: 2.5rem;
+  color: #F5EEDD;
+  margin: 0;
+  flex: 1;
+}
+
+.gig-price-large {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #7AE2CF;
+  margin-left: 2rem;
+}
+
+.gig-meta {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.gig-category,
+.gig-status {
+  color: #7AE2CF;
+  font-size: 0.95rem;
+  padding: 0.4rem 1rem;
+  background: rgba(122, 226, 207, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(122, 226, 207, 0.3);
+}
+
+.gig-section {
+  margin-bottom: 2rem;
+}
+
+.gig-section h2 {
+  color: #F5EEDD;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.gig-section p {
+  color: #7AE2CF;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.gig-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.gig-section li {
+  color: #7AE2CF;
+  font-size: 1.05rem;
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.gig-section li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #7AE2CF;
+}
+
+.poster-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.poster-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7AE2CF, #077A7D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #06202B;
+  font-size: 1.2rem;
+}
+
+.poster-name {
+  color: #F5EEDD;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.poster-email {
+  color: #7AE2CF;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.gig-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 2px solid rgba(122, 226, 207, 0.2);
+}
+
+.accept-button,
+.contact-button {
+  flex: 1;
+  padding: 1rem 2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.accept-button {
+  background: linear-gradient(135deg, #7AE2CF, #077A7D);
+  color: #06202B;
+}
+
+.accept-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(122, 226, 207, 0.4);
+}
+
+.accept-button.accepted {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.accept-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.gig-status.accepted {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.5);
+  color: #ff6b6b;
+}
+
+.contact-button {
+  background: rgba(7, 122, 125, 0.3);
+  border: 2px solid #7AE2CF;
+  color: #7AE2CF;
+}
+
+.contact-button:hover {
+  background: rgba(7, 122, 125, 0.5);
+  transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+  .gig-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .gig-price-large {
+    margin-left: 0;
+  }
+
+  .gig-title {
+    font-size: 2rem;
+  }
+
+  .gig-actions {
+    flex-direction: column;
+  }
+
+  .gig-details-card {
+    padding: 1.5rem;
+  }
+}

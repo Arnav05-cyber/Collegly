@@ -1,0 +1,87 @@
+.welcome-user {
+  font-size: 1.3rem;
+  color: #7AE2CF;
+  margin: 1rem 0;
+  font-weight: 500;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 2rem;
+  margin-top: 3rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.2rem 2rem;
+  background: linear-gradient(135deg, rgba(7, 122, 125, 0.8), rgba(122, 226, 207, 0.3));
+  border: 2px solid #7AE2CF;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  width: 180px;
+  min-height: 140px;
+}
+
+.action-button:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(122, 226, 207, 0.4);
+  background: linear-gradient(135deg, rgba(122, 226, 207, 0.4), rgba(7, 122, 125, 0.8));
+  border-color: #F5EEDD;
+}
+
+.button-icon {
+  font-size: 2rem;
+  margin-bottom: 0.3rem;
+  filter: grayscale(100%);
+}
+
+.button-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #F5EEDD;
+  letter-spacing: 0.5px;
+}
+
+.button-subtitle {
+  font-size: 0.8rem;
+  color: #7AE2CF;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.tasku-button:hover .button-icon {
+  animation: bounce 0.6s ease;
+}
+
+.unima-button:hover .button-icon {
+  animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .action-button {
+    width: 100%;
+    max-width: 300px;
+  }
+}

@@ -1,0 +1,245 @@
+.accepted-gigs-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.accepted-gigs-content {
+  position: relative;
+  z-index: 10;
+  padding: 120px 40px 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.accepted-gigs-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.accepted-gigs-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.accepted-gigs-subtitle {
+  font-size: 1.2rem;
+  color: #7AE2CF;
+  opacity: 0.8;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #7AE2CF;
+}
+
+.empty-state p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  opacity: 0.8;
+}
+
+.browse-button {
+  background: linear-gradient(135deg, #7AE2CF 0%, #077A7D 100%);
+  color: #0a0e27;
+  border: none;
+  padding: 15px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.browse-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(122, 226, 207, 0.3);
+}
+
+.gigs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.gig-card {
+  background: rgba(26, 31, 58, 0.6);
+  border: 1px solid rgba(122, 226, 207, 0.2);
+  border-radius: 16px;
+  padding: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.gig-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(122, 226, 207, 0.5);
+  box-shadow: 0 10px 40px rgba(122, 226, 207, 0.2);
+}
+
+.gig-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.gig-card-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #7AE2CF;
+  margin: 0;
+  flex: 1;
+}
+
+.gig-card-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #7AE2CF;
+  white-space: nowrap;
+}
+
+.gig-card-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gig-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(122, 226, 207, 0.1);
+}
+
+.gig-card-category {
+  background: rgba(122, 226, 207, 0.1);
+  color: #7AE2CF;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.gig-card-status {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.gig-card-status.active {
+  background: rgba(122, 226, 207, 0.2);
+  color: #7AE2CF;
+}
+
+.gig-card-status.completed {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.gig-card-status.inactive {
+  background: rgba(244, 67, 54, 0.2);
+  color: #F44336;
+}
+
+.gig-card-deadline {
+  background: rgba(7, 122, 125, 0.2);
+  border: 1px solid rgba(122, 226, 207, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.deadline-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.deadline-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.deadline-date {
+  color: #7AE2CF;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.time-remaining {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.time-remaining-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.time-remaining-value {
+  color: #7AE2CF;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.gig-card-poster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(122, 226, 207, 0.1);
+}
+
+.poster-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7AE2CF 0%, #077A7D 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0a0e27;
+}
+
+.poster-name-small {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .accepted-gigs-content {
+    padding: 100px 20px 40px;
+  }
+
+  .accepted-gigs-title {
+    font-size: 2.5rem;
+  }
+
+  .gigs-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}

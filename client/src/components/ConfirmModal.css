@@ -1,0 +1,128 @@
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirm-modal {
+  background: rgba(26, 31, 58, 0.95);
+  border: 1px solid rgba(122, 226, 207, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: #F44336;
+}
+
+.confirm-modal-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.confirm-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #7AE2CF;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.confirm-modal-message {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.confirm-cancel-button,
+.confirm-delete-button {
+  flex: 1;
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-cancel-button {
+  background: rgba(122, 226, 207, 0.1);
+  color: #7AE2CF;
+  border: 1px solid rgba(122, 226, 207, 0.3);
+}
+
+.confirm-cancel-button:hover {
+  background: rgba(122, 226, 207, 0.2);
+  transform: translateY(-2px);
+}
+
+.confirm-delete-button {
+  background: rgba(244, 67, 54, 0.9);
+  color: white;
+}
+
+.confirm-delete-button:hover {
+  background: #F44336;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(244, 67, 54, 0.4);
+}
+
+@media (max-width: 768px) {
+  .confirm-modal {
+    padding: 30px 25px;
+  }
+
+  .confirm-modal-actions {
+    flex-direction: column;
+  }
+
+  .confirm-cancel-button,
+  .confirm-delete-button {
+    width: 100%;
+  }
+}
