@@ -119,7 +119,7 @@ export default function MessagesPage() {
     }
   };
 
-  const handleOpenChat = (conversation) => {
+  const handleOpenChat = async (conversation) => {
     console.log('Opening chat for conversation:', conversation);
     const lastMessage = conversation.lastMessage;
     
@@ -134,12 +134,30 @@ export default function MessagesPage() {
 
     console.log('Other user:', otherUser);
 
+    // Fetch gig details to check if current user accepted it
+    let canUpload = false;
+    try {
+      const token = await getToken();
+      const gigResponse = await fetch(`http://localhost:5000/api/gigs/${lastMessage.gigId._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const gigData = await gigResponse.json();
+      if (gigData.success) {
+        canUpload = gigData.gig.acceptedBy?._id === currentUserId || gigData.gig.acceptedBy === currentUserId;
+      }
+    } catch (error) {
+      console.error('Error fetching gig details:', error);
+    }
+
     setSelectedChat({
       gigId: lastMessage.gigId._id,
       posterId: otherUser._id,
       posterName: `${otherUser.firstName} ${otherUser.lastName}`,
       gigTitle: lastMessage.gigId.title,
-      conversationId: conversation._id
+      conversationId: conversation._id,
+      canUploadFiles: canUpload
     });
 
     // Mark conversation as read locally
@@ -285,6 +303,7 @@ export default function MessagesPage() {
                 fetchConversations();
               }}
               inline={true}
+              canUploadFiles={selectedChat.canUploadFiles || false}
             />
           ) : (
             <div className="no-chat-selected">

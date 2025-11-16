@@ -144,6 +144,7 @@ export default function GigDetailsPage() {
           posterName={`${gig.userId.firstName} ${gig.userId.lastName}`}
           currentUserId={currentUserMongoId}
           onClose={() => setShowChat(false)}
+          canUploadFiles={gig.acceptedBy?._id === currentUserMongoId || gig.acceptedBy === currentUserMongoId}
         />
       )}
       <Navbar />

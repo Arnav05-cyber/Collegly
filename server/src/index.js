@@ -32,6 +32,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkAuth);
 
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API' });
@@ -119,6 +122,18 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error('Error sending message:', error);
       socket.emit('message_error', { error: error.message });
+    }
+  });
+
+  // Handle file upload notification
+  socket.on('file_uploaded', (message) => {
+    try {
+      const receiverSocketId = userSockets.get(message.receiverId._id.toString());
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('receive_message', message);
+      }
+    } catch (error) {
+      console.error('Error broadcasting file upload:', error);
     }
   });
 

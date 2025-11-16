@@ -2,13 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import './ChatWindow.css';
 import { io } from 'socket.io-client';
 
-export default function ChatWindow({ gigId, posterId, posterName, currentUserId, onClose, inline = false }) {
+export default function ChatWindow({ gigId, posterId, posterName, currentUserId, onClose, inline = false, canUploadFiles = false }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [chatEnded, setChatEnded] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const conversationId = [currentUserId, posterId, gigId].sort().join('_');
 
   useEffect(() => {
@@ -107,6 +109,55 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || chatEnded) return;
+
+    setUploading(true);
+
+    try {
+      const token = await window.Clerk?.session?.getToken();
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('gigId', gigId);
+      formData.append('receiverId', posterId);
+      formData.append('message', `Sent a file: ${file.name}`);
+
+      const response = await fetch('http://localhost:5000/api/chat/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Add message to UI
+        setMessages(prev => [...prev, data.message]);
+        
+        // Emit through socket for real-time update to receiver
+        if (socket) {
+          socket.emit('file_uploaded', data.message);
+        }
+      } else {
+        alert(data.message || 'Failed to upload file');
+        if (data.message?.includes('ended') || data.message?.includes('completed')) {
+          setChatEnded(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to upload file');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className={`chat-window-overlay ${inline ? 'inline' : ''}`} onClick={inline ? null : onClose}>
       <div className="chat-window" onClick={(e) => e.stopPropagation()}>
@@ -132,7 +183,35 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
                 className={`chat-message ${msg.senderId._id === currentUserId ? 'sent' : 'received'}`}
               >
                 <div className="message-bubble">
-                  <p>{msg.message}</p>
+                  {msg.fileUrl ? (
+                    <div className="message-file">
+                      <div className="file-icon">
+                        {msg.fileType?.startsWith('image/') ? '🖼️' : '📎'}
+                      </div>
+                      <div className="file-info">
+                        <a 
+                          href={`http://localhost:5000${msg.fileUrl}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="file-name"
+                        >
+                          {msg.fileName}
+                        </a>
+                        <span className="file-size">
+                          {(msg.fileSize / 1024).toFixed(2)} KB
+                        </span>
+                      </div>
+                      {msg.fileType?.startsWith('image/') && (
+                        <img 
+                          src={`http://localhost:5000${msg.fileUrl}`} 
+                          alt={msg.fileName}
+                          className="message-image"
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <p>{msg.message}</p>
+                  )}
                   <span className="message-time">
                     {new Date(msg.createdAt).toLocaleTimeString([], { 
                       hour: '2-digit', 
@@ -152,6 +231,32 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
           </div>
         ) : (
           <form className="chat-input-form" onSubmit={handleSendMessage}>
+            {canUploadFiles && (
+              <>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
+                />
+                <button
+                  type="button"
+                  className="chat-file-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  title="Upload file"
+                >
+                  {uploading ? (
+                    <span className="uploading-spinner">⏳</span>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                  )}
+                </button>
+              </>
+            )}
             <input
               type="text"
               className="chat-input"

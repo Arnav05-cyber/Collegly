@@ -23,8 +23,24 @@ const messageSchema = new mongoose.Schema({
   },
   message: {
     type: String,
-    required: true,
+    required: false,
     trim: true
+  },
+  fileUrl: {
+    type: String,
+    required: false
+  },
+  fileName: {
+    type: String,
+    required: false
+  },
+  fileType: {
+    type: String,
+    required: false
+  },
+  fileSize: {
+    type: Number,
+    required: false
   },
   read: {
     type: Boolean,
