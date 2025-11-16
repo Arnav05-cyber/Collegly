@@ -19,6 +19,9 @@ export default function GigDetailsPage() {
   const [toast, setToast] = useState(null);
   const [showChat, setShowChat] = useState(false);
   const [currentUserMongoId, setCurrentUserMongoId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   useEffect(() => {
     fetchGig();
@@ -75,6 +78,101 @@ export default function GigDetailsPage() {
     }
   };
 
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFiles = async () => {
+    if (selectedFiles.length === 0) {
+      setToast({ message: 'Please select at least one file', type: 'error' });
+      return;
+    }
+
+    setUploadingFile(true);
+    try {
+      const token = await window.Clerk?.session?.getToken();
+      
+      // Upload each file
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('gigId', gig._id);
+        formData.append('receiverId', gig.userId._id);
+        formData.append('message', `Uploaded file: ${file.name}`);
+
+        const response = await fetch('http://localhost:5000/api/chat/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to upload file');
+        }
+      }
+
+      setToast({ message: 'Files uploaded successfully!', type: 'success' });
+      setSelectedFiles([]);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      setToast({ message: error.message || 'Failed to upload files', type: 'error' });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleSubmitWork = async () => {
+    if (!window.confirm('Are you sure you want to submit your work? The gig poster will review it.')) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const token = await window.Clerk?.session?.getToken();
+      const response = await fetch(`http://localhost:5000/api/gigs/${gig._id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setToast({ message: 'Work submitted successfully! Waiting for review.', type: 'success' });
+        fetchGig();
+      } else {
+        setToast({ message: data.message || 'Failed to submit work', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error submitting work:', error);
+      setToast({ message: 'Failed to submit work', type: 'error' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      'in_progress': 'In Progress',
+      'submitted': 'Submitted - Under Review',
+      'in_revision': 'Revision Requested',
+      'completed': 'Completed',
+      'active': 'Active',
+      'inactive': 'Inactive'
+    };
+    return statusMap[status] || status;
+  };
+
   if (loading) {
     return (
       <div className="gig-details-container">
@@ -127,6 +225,8 @@ export default function GigDetailsPage() {
 
   const isAccepted = gig.acceptedBy !== null;
   const isOwner = user && gig.userId.email === user.primaryEmailAddress?.emailAddress;
+  const isAcceptor = currentUserMongoId && gig.acceptedBy && (gig.acceptedBy._id === currentUserMongoId || gig.acceptedBy === currentUserMongoId);
+  const canSubmitWork = isAcceptor && (gig.status === 'in_progress' || gig.status === 'in_revision' || gig.status === 'active') && gig.status !== 'completed' && gig.status !== 'submitted';
 
   return (
     <div className="gig-details-container">
@@ -170,10 +270,17 @@ export default function GigDetailsPage() {
 
           <div className="gig-meta">
             <span className="gig-category">Category: {gig.category}</span>
-            <span className={`gig-status ${isAccepted ? 'accepted' : ''}`}>
-              Status: {isAccepted ? 'Accepted' : 'Active'}
+            <span className={`gig-status ${gig.status}`}>
+              Status: {getStatusDisplay(gig.status)}
             </span>
           </div>
+
+          {gig.status === 'in_revision' && gig.revisionHistory?.length > 0 && isAcceptor && (
+            <div className="revision-alert">
+              <h3>⚠️ Revision Requested ({gig.revisionCount}/{gig.maxRevisions})</h3>
+              <p>{gig.revisionHistory[gig.revisionHistory.length - 1].reason}</p>
+            </div>
+          )}
 
           <div className="gig-section">
             <h2>Description</h2>
@@ -207,8 +314,70 @@ export default function GigDetailsPage() {
             </div>
           </div>
 
+          {canSubmitWork && (
+            <div className="submit-work-section">
+              <h2>Submit Your Work</h2>
+              <p className="section-description">Upload your completed work files and submit for review</p>
+              
+              <div className="file-upload-area">
+                <input
+                  type="file"
+                  id="file-upload"
+                  multiple
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
+                />
+                <label htmlFor="file-upload" className="file-upload-label">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span>Choose Files to Upload</span>
+                </label>
+
+                {selectedFiles.length > 0 && (
+                  <div className="selected-files">
+                    <h4>Selected Files ({selectedFiles.length})</h4>
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="file-item">
+                        <span className="file-name">{file.name}</span>
+                        <span className="file-size">({(file.size / 1024).toFixed(2)} KB)</span>
+                        <button 
+                          className="remove-file-btn"
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedFiles.length > 0 && (
+                  <button
+                    className="upload-files-btn"
+                    onClick={handleUploadFiles}
+                    disabled={uploadingFile}
+                  >
+                    {uploadingFile ? 'Uploading...' : `Upload ${selectedFiles.length} File(s)`}
+                  </button>
+                )}
+              </div>
+
+              <button
+                className="submit-work-btn-large"
+                onClick={handleSubmitWork}
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting...' : '✓ Submit Work for Review'}
+              </button>
+            </div>
+          )}
+
           <div className="gig-actions">
-            {!isOwner && (
+            {!isOwner && !isAccepted && (
               <button 
                 className={`accept-button ${isAccepted ? 'accepted' : ''}`}
                 onClick={handleAcceptGig}

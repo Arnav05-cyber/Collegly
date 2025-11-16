@@ -85,3 +85,25 @@
     max-width: 300px;
   }
 }
+
+.join-now-button {
+  padding: 1.2rem 3rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7AE2CF 0%, #077A7D 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(122, 226, 207, 0.3);
+}
+
+.join-now-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(122, 226, 207, 0.5);
+}
+
+.join-now-button .gradient-text {
+  color: #0a0e27;
+  font-size: 1.3rem;
+}
