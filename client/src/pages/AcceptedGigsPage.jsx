@@ -22,6 +22,10 @@ export default function AcceptedGigsPage() {
       console.log('Accepted gigs:', response);
       if (response.success) {
         setGigs(response.gigs);
+        // Debug: Log each gig's status
+        response.gigs.forEach(gig => {
+          console.log(`Gig ${gig._id} status:`, gig.status);
+        });
       }
       setLoading(false);
     } catch (error) {
@@ -194,7 +198,7 @@ export default function AcceptedGigsPage() {
                   </span>
                 </div>
 
-                {(gig.status === 'in_progress' || gig.status === 'in_revision') && (
+                {gig.status !== 'completed' && gig.status !== 'submitted' && (
                   <button
                     className="submit-work-btn"
                     onClick={(e) => handleSubmitWork(e, gig._id)}

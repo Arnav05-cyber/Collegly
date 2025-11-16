@@ -572,12 +572,17 @@ const submitWork = async (req, res) => {
       });
     }
 
-    // Check if gig is in correct status
-    if (gig.status !== 'in_progress' && gig.status !== 'in_revision') {
+    // Check if gig is in correct status (allow 'active' for backward compatibility)
+    if (gig.status !== 'in_progress' && gig.status !== 'in_revision' && gig.status !== 'active') {
       return res.status(400).json({
         success: false,
         message: 'This gig is not in a state where work can be submitted'
       });
+    }
+
+    // If status is still 'active', update it to 'in_progress' first
+    if (gig.status === 'active') {
+      gig.status = 'in_progress';
     }
 
     // Update gig status to submitted
