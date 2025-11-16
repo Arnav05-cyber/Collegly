@@ -72,10 +72,31 @@ const sendMessage = async (req, res) => {
       });
     }
 
+    // Check if gig is completed (chat should be ended)
+    if (gig.status === 'completed') {
+      return res.status(403).json({
+        success: false,
+        message: 'This gig has been completed. The chat has ended.'
+      });
+    }
+
     // Create conversation ID (sorted user IDs + gig ID for consistency)
     const conversationId = [sender._id.toString(), receiverId, gigId]
       .sort()
       .join('_');
+
+    // Check if chat has been ended
+    const existingMessage = await Message.findOne({ 
+      conversationId,
+      chatEnded: true 
+    });
+
+    if (existingMessage) {
+      return res.status(403).json({
+        success: false,
+        message: 'This chat has ended because the gig is completed.'
+      });
+    }
 
     const newMessage = await Message.create({
       conversationId,

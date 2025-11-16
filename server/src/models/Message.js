@@ -29,6 +29,10 @@ const messageSchema = new mongoose.Schema({
   read: {
     type: Boolean,
     default: false
+  },
+  chatEnded: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

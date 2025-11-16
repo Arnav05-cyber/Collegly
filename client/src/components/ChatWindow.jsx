@@ -7,6 +7,7 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [chatEnded, setChatEnded] = useState(false);
   const messagesEndRef = useRef(null);
   const conversationId = [currentUserId, posterId, gigId].sort().join('_');
 
@@ -28,6 +29,13 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
     newSocket.on('message_sent', (message) => {
       // Message confirmation from server
       console.log('Message sent:', message);
+    });
+
+    newSocket.on('message_error', (data) => {
+      console.error('Message error:', data.error);
+      if (data.error.includes('ended') || data.error.includes('completed')) {
+        setChatEnded(true);
+      }
     });
 
     // Fetch existing messages
@@ -53,6 +61,9 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
       const data = await response.json();
       if (data.success) {
         setMessages(data.messages);
+        // Check if any message has chatEnded flag
+        const hasEndedChat = data.messages.some(msg => msg.chatEnded);
+        setChatEnded(hasEndedChat);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -65,9 +76,9 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !socket) return;
+    if (!newMessage.trim() || !socket || chatEnded) return;
 
     const messageData = {
       conversationId,
@@ -77,16 +88,23 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
       message: newMessage.trim()
     };
 
-    socket.emit('send_message', messageData);
-    
-    // Optimistically add message to UI
-    setMessages(prev => [...prev, {
-      ...messageData,
-      senderId: { _id: currentUserId },
-      createdAt: new Date()
-    }]);
-    
-    setNewMessage('');
+    try {
+      socket.emit('send_message', messageData);
+      
+      // Optimistically add message to UI
+      setMessages(prev => [...prev, {
+        ...messageData,
+        senderId: { _id: currentUserId },
+        createdAt: new Date()
+      }]);
+      
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      if (error.message?.includes('ended')) {
+        setChatEnded(true);
+      }
+    }
   };
 
   return (
@@ -128,21 +146,27 @@ export default function ChatWindow({ gigId, posterId, posterName, currentUserId,
           <div ref={messagesEndRef} />
         </div>
 
-        <form className="chat-input-form" onSubmit={handleSendMessage}>
-          <input
-            type="text"
-            className="chat-input"
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-          />
-          <button type="submit" className="chat-send-btn" disabled={!newMessage.trim()}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </form>
+        {chatEnded ? (
+          <div className="chat-ended-notice">
+            <p>🎉 This gig has been completed. The chat has ended.</p>
+          </div>
+        ) : (
+          <form className="chat-input-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Type a message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
+            <button type="submit" className="chat-send-btn" disabled={!newMessage.trim()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

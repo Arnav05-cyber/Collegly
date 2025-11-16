@@ -65,6 +65,30 @@ io.on('connection', (socket) => {
     try {
       const { conversationId, senderId, receiverId, gigId, message } = data;
 
+      // Check if chat has ended
+      const existingMessage = await Message.findOne({ 
+        conversationId,
+        chatEnded: true 
+      });
+
+      if (existingMessage) {
+        socket.emit('message_error', { 
+          error: 'This chat has ended because the gig is completed.' 
+        });
+        return;
+      }
+
+      // Check if gig is completed
+      const Gig = require('./models/Gig');
+      const gig = await Gig.findById(gigId);
+      
+      if (gig && gig.status === 'completed') {
+        socket.emit('message_error', { 
+          error: 'This gig has been completed. The chat has ended.' 
+        });
+        return;
+      }
+
       // Save message to database
       const newMessage = await Message.create({
         conversationId,

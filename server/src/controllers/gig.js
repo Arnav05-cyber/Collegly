@@ -353,6 +353,20 @@ const completeGig = async (req, res) => {
     gig.completedAt = new Date();
     await gig.save();
 
+    // End the chat between the gig poster and acceptor
+    const Message = require('../models/Message');
+    const conversationId = [gig.userId.toString(), gig.acceptedBy.toString()].sort().join('_');
+    
+    await Message.updateMany(
+      { 
+        conversationId: conversationId,
+        gigId: gig._id
+      },
+      { 
+        $set: { chatEnded: true }
+      }
+    );
+
     res.json({
       success: true,
       message: 'Gig completed successfully',
