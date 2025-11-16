@@ -12,7 +12,10 @@ const {
   completeGig,
   getMyGigs,
   getAcceptedGigs,
-  cancelAcceptedGig
+  cancelAcceptedGig,
+  submitWork,
+  approveWork,
+  requestRevision
 } = require('../controllers/gig');
 
 // Public routes
@@ -28,5 +31,8 @@ router.delete('/:id', protectRoute, deleteGig);
 router.post('/:id/accept', protectRoute, acceptGig);
 router.post('/:id/complete', protectRoute, completeGig);
 router.post('/:id/cancel', protectRoute, cancelAcceptedGig);
+router.post('/:id/submit', protectRoute, submitWork);
+router.post('/:id/approve', protectRoute, approveWork);
+router.post('/:id/request-revision', protectRoute, requestRevision);
 
 module.exports = router;

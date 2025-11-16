@@ -270,6 +270,7 @@ const acceptGig = async (req, res) => {
     // Update gig with acceptance details
     gig.acceptedBy = user._id;
     gig.acceptedAt = new Date();
+    gig.status = 'in_progress';
     await gig.save();
 
     // Add gig to user's acceptedGigs and add gig_worker role if not present
@@ -538,6 +539,222 @@ const cancelAcceptedGig = async (req, res) => {
   }
 };
 
+// Submit work (by the worker who accepted the gig)
+const submitWork = async (req, res) => {
+  try {
+    const auth = req.auth();
+    const clerkId = auth.userId;
+    const { id } = req.params;
+
+    const user = await User.findOne({ clerkId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const gig = await Gig.findById(id);
+
+    if (!gig) {
+      return res.status(404).json({
+        success: false,
+        message: 'Gig not found'
+      });
+    }
+
+    // Check if user is the one who accepted the gig
+    if (!gig.acceptedBy || gig.acceptedBy.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to submit work for this gig'
+      });
+    }
+
+    // Check if gig is in correct status
+    if (gig.status !== 'in_progress' && gig.status !== 'in_revision') {
+      return res.status(400).json({
+        success: false,
+        message: 'This gig is not in a state where work can be submitted'
+      });
+    }
+
+    // Update gig status to submitted
+    gig.status = 'submitted';
+    gig.submittedAt = new Date();
+    
+    // If this was a revision, mark it as resolved
+    if (gig.revisionHistory.length > 0) {
+      const lastRevision = gig.revisionHistory[gig.revisionHistory.length - 1];
+      if (!lastRevision.resolvedAt) {
+        lastRevision.resolvedAt = new Date();
+      }
+    }
+    
+    await gig.save();
+
+    res.json({
+      success: true,
+      message: 'Work submitted successfully',
+      gig: gig
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting work',
+      error: error.message
+    });
+  }
+};
+
+// Approve work (by the gig poster)
+const approveWork = async (req, res) => {
+  try {
+    const auth = req.auth();
+    const clerkId = auth.userId;
+    const { id } = req.params;
+
+    const user = await User.findOne({ clerkId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const gig = await Gig.findById(id);
+
+    if (!gig) {
+      return res.status(404).json({
+        success: false,
+        message: 'Gig not found'
+      });
+    }
+
+    // Check if user is the gig poster
+    if (gig.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to approve this gig'
+      });
+    }
+
+    // Check if gig is submitted
+    if (gig.status !== 'submitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'This gig has not been submitted for approval'
+      });
+    }
+
+    // Mark gig as completed
+    gig.status = 'completed';
+    gig.completedAt = new Date();
+    await gig.save();
+
+    // End the chat between the gig poster and acceptor
+    const Message = require('../models/Message');
+    const conversationId = [gig.userId.toString(), gig.acceptedBy.toString()].sort().join('_');
+    
+    await Message.updateMany(
+      { 
+        conversationId: conversationId,
+        gigId: gig._id
+      },
+      { 
+        $set: { chatEnded: true }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Work approved and gig completed successfully',
+      gig: gig
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error approving work',
+      error: error.message
+    });
+  }
+};
+
+// Request revision (by the gig poster)
+const requestRevision = async (req, res) => {
+  try {
+    const auth = req.auth();
+    const clerkId = auth.userId;
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const user = await User.findOne({ clerkId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const gig = await Gig.findById(id);
+
+    if (!gig) {
+      return res.status(404).json({
+        success: false,
+        message: 'Gig not found'
+      });
+    }
+
+    // Check if user is the gig poster
+    if (gig.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to request revisions for this gig'
+      });
+    }
+
+    // Check if gig is submitted
+    if (gig.status !== 'submitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'This gig has not been submitted for review'
+      });
+    }
+
+    // Check if max revisions reached
+    if (gig.revisionCount >= gig.maxRevisions) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum number of revisions (${gig.maxRevisions}) has been reached. You must either approve the work or cancel the gig.`
+      });
+    }
+
+    // Update gig status and add revision
+    gig.status = 'in_revision';
+    gig.revisionCount += 1;
+    gig.revisionHistory.push({
+      requestedAt: new Date(),
+      reason: reason || 'No reason provided'
+    });
+    await gig.save();
+
+    res.json({
+      success: true,
+      message: `Revision requested (${gig.revisionCount}/${gig.maxRevisions})`,
+      gig: gig
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error requesting revision',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createGig,
   getAllGigs,
@@ -548,5 +765,8 @@ module.exports = {
   completeGig,
   getMyGigs,
   getAcceptedGigs,
-  cancelAcceptedGig
+  cancelAcceptedGig,
+  submitWork,
+  approveWork,
+  requestRevision
 };

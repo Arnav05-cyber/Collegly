@@ -15,6 +15,9 @@ export default function PostedGigsPage() {
   const [toast, setToast] = useState(null);
   const [deletingGigId, setDeletingGigId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [actioningGigId, setActioningGigId] = useState(null);
+  const [revisionReason, setRevisionReason] = useState('');
+  const [showRevisionModal, setShowRevisionModal] = useState(null);
 
   useEffect(() => {
     fetchPostedGigs();
@@ -66,6 +69,88 @@ export default function PostedGigsPage() {
     setConfirmDelete(null);
   };
 
+  const handleApproveWork = async (e, gigId) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Are you sure you want to approve this work? This will complete the gig.')) {
+      return;
+    }
+
+    setActioningGigId(gigId);
+    try {
+      const token = await window.Clerk?.session?.getToken();
+      const response = await fetch(`http://localhost:5000/api/gigs/${gigId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setToast({ message: 'Work approved! Gig completed successfully.', type: 'success' });
+        fetchPostedGigs();
+      } else {
+        setToast({ message: data.message || 'Failed to approve work', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error approving work:', error);
+      setToast({ message: 'Failed to approve work', type: 'error' });
+    } finally {
+      setActioningGigId(null);
+    }
+  };
+
+  const handleRequestRevision = async (gigId) => {
+    if (!revisionReason.trim()) {
+      alert('Please provide a reason for the revision');
+      return;
+    }
+
+    setActioningGigId(gigId);
+    try {
+      const token = await window.Clerk?.session?.getToken();
+      const response = await fetch(`http://localhost:5000/api/gigs/${gigId}/request-revision`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: revisionReason })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setToast({ message: data.message, type: 'success' });
+        setShowRevisionModal(null);
+        setRevisionReason('');
+        fetchPostedGigs();
+      } else {
+        setToast({ message: data.message || 'Failed to request revision', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error requesting revision:', error);
+      setToast({ message: 'Failed to request revision', type: 'error' });
+    } finally {
+      setActioningGigId(null);
+    }
+  };
+
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      'in_progress': 'In Progress',
+      'submitted': 'Submitted - Awaiting Review',
+      'in_revision': 'In Revision',
+      'completed': 'Completed',
+      'active': 'Active',
+      'inactive': 'Inactive'
+    };
+    return statusMap[status] || status;
+  };
+
   return (
     <div className="posted-gigs-container">
       {toast && (
@@ -81,6 +166,39 @@ export default function PostedGigsPage() {
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}
         />
+      )}
+      {showRevisionModal && (
+        <div className="modal-overlay" onClick={() => setShowRevisionModal(null)}>
+          <div className="revision-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Request Revision</h3>
+            <p>Please explain what needs to be revised:</p>
+            <textarea
+              className="revision-textarea"
+              value={revisionReason}
+              onChange={(e) => setRevisionReason(e.target.value)}
+              placeholder="Describe the changes needed..."
+              rows="5"
+            />
+            <div className="modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => {
+                  setShowRevisionModal(null);
+                  setRevisionReason('');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="submit-btn"
+                onClick={() => handleRequestRevision(showRevisionModal)}
+                disabled={!revisionReason.trim() || actioningGigId}
+              >
+                {actioningGigId ? 'Requesting...' : 'Request Revision'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       <Navbar />
       <Squares 
@@ -132,9 +250,15 @@ export default function PostedGigsPage() {
                 <div className="gig-card-meta">
                   <span className="gig-card-category">{gig.category}</span>
                   <span className={`gig-card-status ${gig.status}`}>
-                    {gig.status}
+                    {getStatusDisplay(gig.status)}
                   </span>
                 </div>
+
+                {gig.status === 'submitted' && (
+                  <div className="review-notice">
+                    <p>✨ Work has been submitted for your review</p>
+                  </div>
+                )}
 
                 {gig.acceptedBy && (
                   <div className="gig-card-accepted">
@@ -147,13 +271,37 @@ export default function PostedGigsPage() {
                 )}
 
                 <div className="gig-card-actions">
-                  <button 
-                    className="delete-button"
-                    onClick={(e) => handleDeleteClick(gig._id, e)}
-                    disabled={deletingGigId === gig._id}
-                  >
-                    {deletingGigId === gig._id ? 'Deleting...' : 'Delete Gig'}
-                  </button>
+                  {gig.status === 'submitted' ? (
+                    <>
+                      <button 
+                        className="approve-button"
+                        onClick={(e) => handleApproveWork(e, gig._id)}
+                        disabled={actioningGigId === gig._id}
+                      >
+                        {actioningGigId === gig._id ? 'Approving...' : '✓ Approve Work'}
+                      </button>
+                      {gig.revisionCount < gig.maxRevisions && (
+                        <button 
+                          className="revision-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowRevisionModal(gig._id);
+                          }}
+                          disabled={actioningGigId === gig._id}
+                        >
+                          🔄 Request Revision ({gig.revisionCount}/{gig.maxRevisions})
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <button 
+                      className="delete-button"
+                      onClick={(e) => handleDeleteClick(gig._id, e)}
+                      disabled={deletingGigId === gig._id}
+                    >
+                      {deletingGigId === gig._id ? 'Deleting...' : 'Delete Gig'}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

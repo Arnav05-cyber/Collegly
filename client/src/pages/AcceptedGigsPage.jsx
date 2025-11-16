@@ -10,6 +10,7 @@ export default function AcceptedGigsPage() {
   const navigate = useNavigate();
   const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(null);
 
   useEffect(() => {
     fetchAcceptedGigs();
@@ -59,6 +60,52 @@ export default function AcceptedGigsPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleSubmitWork = async (e, gigId) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Are you sure you want to submit your work? The gig poster will review it.')) {
+      return;
+    }
+
+    setSubmitting(gigId);
+    try {
+      const token = await window.Clerk?.session?.getToken();
+      const response = await fetch(`http://localhost:5000/api/gigs/${gigId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Work submitted successfully! Waiting for review.');
+        fetchAcceptedGigs();
+      } else {
+        alert(data.message || 'Failed to submit work');
+      }
+    } catch (error) {
+      console.error('Error submitting work:', error);
+      alert('Failed to submit work');
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      'in_progress': 'In Progress',
+      'submitted': 'Submitted - Under Review',
+      'in_revision': 'Revision Requested',
+      'completed': 'Completed',
+      'active': 'Active',
+      'inactive': 'Inactive'
+    };
+    return statusMap[status] || status;
   };
 
   return (
@@ -113,9 +160,17 @@ export default function AcceptedGigsPage() {
                 <div className="gig-card-meta">
                   <span className="gig-card-category">{gig.category}</span>
                   <span className={`gig-card-status ${gig.status}`}>
-                    {gig.status}
+                    {getStatusDisplay(gig.status)}
                   </span>
                 </div>
+
+                {gig.status === 'in_revision' && gig.revisionHistory?.length > 0 && (
+                  <div className="revision-notice">
+                    <p className="revision-text">
+                      ⚠️ Revision {gig.revisionCount}/{gig.maxRevisions}: {gig.revisionHistory[gig.revisionHistory.length - 1].reason}
+                    </p>
+                  </div>
+                )}
 
                 <div className="gig-card-deadline">
                   <div className="deadline-info">
@@ -138,6 +193,16 @@ export default function AcceptedGigsPage() {
                     Posted by {gig.userId?.firstName} {gig.userId?.lastName}
                   </span>
                 </div>
+
+                {(gig.status === 'in_progress' || gig.status === 'in_revision') && (
+                  <button
+                    className="submit-work-btn"
+                    onClick={(e) => handleSubmitWork(e, gig._id)}
+                    disabled={submitting === gig._id}
+                  >
+                    {submitting === gig._id ? 'Submitting...' : '✓ Submit Work'}
+                  </button>
+                )}
               </div>
             ))}
           </div>

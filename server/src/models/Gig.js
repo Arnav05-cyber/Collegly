@@ -29,7 +29,7 @@ const gigSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'completed'],
+    enum: ['active', 'inactive', 'in_progress', 'submitted', 'in_revision', 'completed'],
     default: 'active'
   },
   timeLimit: {
@@ -45,10 +45,27 @@ const gigSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  submittedAt: {
+    type: Date,
+    default: null
+  },
   completedAt: {
     type: Date,
     default: null
-  }
+  },
+  revisionCount: {
+    type: Number,
+    default: 0
+  },
+  maxRevisions: {
+    type: Number,
+    default: 2
+  },
+  revisionHistory: [{
+    requestedAt: Date,
+    reason: String,
+    resolvedAt: Date
+  }]
 }, {
   timestamps: true
 });

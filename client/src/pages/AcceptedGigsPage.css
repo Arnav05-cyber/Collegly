@@ -243,3 +243,57 @@
     gap: 20px;
   }
 }
+
+.gig-card-status.in_progress {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196F3;
+}
+
+.gig-card-status.submitted {
+  background: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+}
+
+.gig-card-status.in_revision {
+  background: rgba(255, 152, 0, 0.2);
+  color: #FF9800;
+}
+
+.revision-notice {
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.revision-text {
+  color: #FF9800;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.submit-work-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #7AE2CF 0%, #077A7D 100%);
+  color: #0a0e27;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+}
+
+.submit-work-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(122, 226, 207, 0.4);
+}
+
+.submit-work-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
